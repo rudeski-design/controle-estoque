@@ -1,7 +1,8 @@
-const V = "estoque-v7"; // mude para v2, v3… a cada atualização do app
-const SHELL = ["/", "/index.html", "/config.js", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
+const V = "estoque-v9";
+const SHELL = ["./", "./index.html", "./config.js", "./manifest.webmanifest",
+  "./icons/icon-192.png", "./icons/icon-512.png", "./icons/logo.svg"];
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)));
+  e.waitUntil(caches.open(V).then(c => Promise.allSettled(SHELL.map(u => c.add(u)))));
   self.skipWaiting();
 });
 self.addEventListener("activate", e => {
@@ -13,9 +14,12 @@ self.addEventListener("fetch", e => {
   const u = new URL(e.request.url);
   const ok = u.origin === location.origin || u.hostname === "cdn.jsdelivr.net" ||
              u.hostname === "fonts.googleapis.com" || u.hostname === "fonts.gstatic.com";
-  if (!ok) return; // a API do Supabase nunca passa pelo cache
+  if (!ok) return;
   e.respondWith(
-    fetch(e.request).then(r => { const c = r.clone(); caches.open(V).then(x => x.put(e.request, c)); return r; })
-      .catch(() => caches.match(e.request).then(m => m || caches.match("/index.html")))
+    fetch(e.request).then(r => {
+      if (r.ok) { const c = r.clone(); caches.open(V).then(x => x.put(e.request, c)); }
+      return r;
+    }).catch(() => caches.match(e.request).then(m => m ||
+      (e.request.mode === "navigate" ? caches.match("./index.html") : Response.error())))
   );
 });
