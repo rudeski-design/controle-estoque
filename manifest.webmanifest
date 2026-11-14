@@ -1,15 +1,16 @@
 {
   "name": "Almoxarifado de insumos",
   "short_name": "Estoque",
-  "start_url": "/",
-  "scope": "/",
+  "id": "/controle-estoque/",
+  "start_url": "/controle-estoque/",
+  "scope": "/controle-estoque/",
   "display": "standalone",
   "lang": "pt-BR",
   "background_color": "#0c3b3f",
   "theme_color": "#0c3b3f",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
