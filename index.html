@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="manifest" href="/manifest.webmanifest">
+<link rel="manifest" href="./manifest.webmanifest">
 <meta name="theme-color" content="#0c3b3f">
-<link rel="icon" type="image/png" href="/icons/icon-192.png?v=4">
-<link rel="apple-touch-icon" href="/icons/icon-192.png?v=4">
+<link rel="icon" type="image/png" href="./icons/icon-192.png?v=5">
+<link rel="apple-touch-icon" href="./icons/icon-192.png?v=5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Estoque">
-<script src="/config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="./config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 <title>Almoxarifado – Insumos Hospitalares</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
@@ -53,6 +53,7 @@ label.l{font-size:12px;color:var(--mut);display:block;margin-bottom:4px;font-wei
 .row>*{flex:1;min-width:130px}
 .row>.sm{flex:0 0 auto;min-width:0}
 button.pri{background:var(--ac);color:var(--acx);border:0;border-radius:10px;padding:12px 16px;font-weight:600;cursor:pointer}
+button.pri:disabled{opacity:.6;cursor:wait}
 button.sec{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;cursor:pointer}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
 .it{background:var(--card);border:1px solid var(--bd);border-left:5px solid var(--ok);border-radius:12px;padding:12px 14px;box-shadow:var(--sh)}
@@ -83,7 +84,6 @@ td.q,th.q{text-align:right;font-family:"IBM Plex Mono",monospace}
 .hide{display:none!important}
 textarea{min-height:100px}
 .mut{color:var(--mut);font-size:13px}
-/* ícones: 2 cores da identidade (verde-azulado escuro + turquesa) */
 :root{--ic1:#0a6c70;--ic2:#46c6c9;--ia1:#fff;--ia2:#a9ecee}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ic1:#46c6c9;--ic2:#2a8f93;--ia1:#062224;--ia2:#0a6c70}}
 :root[data-theme="dark"]{--ic1:#46c6c9;--ic2:#2a8f93;--ia1:#062224;--ia2:#0a6c70}
@@ -106,7 +106,7 @@ input,select,textarea{font-size:16px}
 </head>
 <body>
 <header><div class="in top">
-  <div class="brand"><div class="logo"><img src="/icons/logo.svg" alt="Logo" width="40" height="40"></div><div><h1>Almoxarifado de insumos</h1><div class="sub">Controle de entradas e saídas</div></div></div>
+  <div class="brand"><div class="logo"><img src="./icons/logo.svg?v=5" alt="Logo" width="40" height="40" onerror="this.onerror=null;this.src='./icons/icon-192.png?v=5'"></div><div><h1>Almoxarifado de insumos</h1><div class="sub">Controle de entradas e saídas</div></div></div>
   <div class="who" id="who"><label for="me">Responsável</label><input id="me" list="nl" maxlength="40" placeholder="Digite seu nome" autocomplete="off"><datalist id="nl"></datalist><a href="#" id="out" class="hide" style="font-size:12px;color:#9fe3e5;text-decoration:none;align-self:flex-end">Sair</a></div>
 </div></header>
 <main>
@@ -281,7 +281,8 @@ async function start(u){
   if(!nome){started=false;await sb.auth.signOut();msg("#lm","No primeiro acesso, informe seu nome no campo indicado.",false);return}
   if(!(u.user_metadata&&u.user_metadata.nome))sb.auth.updateUser({data:{nome:nome}}).catch(function(){});
   pn="";$("#me").value=nome;$("#me").readOnly=true;
-  uid=u.id;var a=await sb.from("admins").select("email").limit(1);
+  uid=u.id;
+  var a=await sb.from("admins").select("email").eq("email",(u.email||"").toLowerCase()).limit(1);
   canEdit=!a.error&&!!a.data&&a.data.length>0;
   $("#tadm").classList.toggle("hide",!canEdit);$("#seg").classList.toggle("hide",!canEdit);if(!canEdit)setKind("out");
 
@@ -295,9 +296,17 @@ async function start(u){
   }
 }
 $("#lb").onclick=async function(){
-  pn=$("#ln").value.trim();
-  try{var x=await sb.auth.signInWithPassword({email:$("#le").value.trim(),password:$("#lp").value});if(x.error)msg("#lm","E-mail ou senha incorretos.",false)}
-  catch(e){msg("#lm","Sem conexão. Tente novamente.",false)}
+  var em=$("#le").value.trim(),pw=$("#lp").value,b=$("#lb");
+  if(!em||!pw)return msg("#lm","Informe e-mail e senha.",false);
+  if(!sb)return msg("#lm","Supabase não carregou. Verifique a conexão e o config.js.",false);
+  pn=$("#ln").value.trim();b.disabled=true;b.textContent="Entrando…";
+  try{
+    var x=await sb.auth.signInWithPassword({email:em,password:pw});
+    if(x.error){var m=(x.error.message||"").toLowerCase();
+      msg("#lm",m.indexOf("confirm")>=0?"E-mail ainda não confirmado. Confirme pelo link recebido.":
+               m.indexOf("invalid")>=0?"E-mail ou senha incorretos.":"Erro: "+x.error.message,false)}
+  }catch(e){msg("#lm","Sem conexão. Tente novamente.",false)}
+  finally{b.disabled=false;b.textContent="Entrar"}
 };
 $("#lp").onkeydown=function(e){if(e.key==="Enter")$("#lb").click()};
 $("#ln").onkeydown=$("#lp").onkeydown;
@@ -312,7 +321,7 @@ function init(){
     else{started=false;uid=null;canEdit=false;if(ch){try{sb.removeChannel(ch)}catch(e){}ch=null}resetUI();try{localStorage.removeItem("estoque-cache")}catch(e){}S.p=[];S.m=[];render();$("#out").classList.add("hide");$("#tadm").classList.add("hide");$("#lg").classList.remove("hide")}
   });
 }
-if("serviceWorker" in navigator)addEventListener("load",function(){navigator.serviceWorker.register("/sw.js")});
+if("serviceWorker" in navigator)addEventListener("load",function(){navigator.serviceWorker.register("./sw.js")});
 init();
 </script>
 </body>
