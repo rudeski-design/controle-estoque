@@ -368,7 +368,12 @@ function init(){
     else{started=false;uid=null;canEdit=false;if(ch){try{sb.removeChannel(ch)}catch(e){}ch=null}resetUI();try{localStorage.removeItem("estoque-cache")}catch(e){}S.p=[];S.m=[];render();$("#out").classList.add("hide");$("#tadm").classList.add("hide");$("#lg").classList.remove("hide")}
   });
 }
-if("serviceWorker" in navigator)addEventListener("load",function(){navigator.serviceWorker.register("./sw.js")});
+
+if("serviceWorker" in navigator){
+  let recarregou=false;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(!recarregou){recarregou=true;location.reload()}});
+  addEventListener("load",()=>{navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"})});
+}
 init();
 </script>
 </body>
