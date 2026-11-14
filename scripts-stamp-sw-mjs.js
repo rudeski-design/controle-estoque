@@ -3,8 +3,8 @@ import { readFile, writeFile } from "node:fs/promises";
 const file = "sw.js";
 const re = /const V = "[^"]*";/;
 
-// Usa o hash do commit no Netlify; se não houver, usa data/hora (build local)
-const commit = (process.env.COMMIT_REF || "").slice(0, 7);
+// Usa o hash do commit no GitHub Actions; se não houver, usa data/hora (build local)
+const commit = (process.env.GITHUB_SHA || "").slice(0, 7);
 const id = commit || new Date().toISOString().replace(/\D/g, "").slice(0, 14);
 
 const src = await readFile(file, "utf8");
