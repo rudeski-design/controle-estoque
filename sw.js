@@ -1,6 +1,7 @@
-const V = "estoque-v11";
-const SHELL = ["./", "./index.html", "./config.js", "./manifest.webmanifest?v=7",
-  "./icons/icon-192.png?v=5", "./icons/icon-512.png", "./icons/logo.svg?v=8"];
+// Esta linha é reescrita automaticamente a cada deploy (scripts/stamp-sw.mjs)
+const V = "estoque-dev";
+const SHELL = ["./", "./index.html", "./config.js", "./manifest.webmanifest",
+  "./icons/icon-192.png", "./icons/icon-512.png", "./icons/logo.svg"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(V).then(c => Promise.allSettled(SHELL.map(u => c.add(u)))));
