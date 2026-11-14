@@ -1,4 +1,4 @@
-const V = "estoque-v9";
+const V = "estoque-v10";
 const SHELL = ["./", "./index.html", "./config.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/logo.svg"];
 self.addEventListener("install", e => {
