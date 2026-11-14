@@ -1,14 +1,17 @@
-const V = "estoque-v10";
-const SHELL = ["./", "./index.html", "./config.js", "./manifest.webmanifest",
-  "./icons/icon-192.png", "./icons/icon-512.png", "./icons/logo.svg"];
+const V = "estoque-v11";
+const SHELL = ["./", "./index.html", "./config.js", "./manifest.webmanifest?v=7",
+  "./icons/icon-192.png?v=5", "./icons/icon-512.png", "./icons/logo.svg?v=8"];
+
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(V).then(c => Promise.allSettled(SHELL.map(u => c.add(u)))));
   self.skipWaiting();
 });
+
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== V).map(x => caches.delete(x)))));
   self.clients.claim();
 });
+
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   const u = new URL(e.request.url);
@@ -19,7 +22,7 @@ self.addEventListener("fetch", e => {
     fetch(e.request).then(r => {
       if (r.ok) { const c = r.clone(); caches.open(V).then(x => x.put(e.request, c)); }
       return r;
-    }).catch(() => caches.match(e.request).then(m => m ||
-      (e.request.mode === "navigate" ? caches.match("./index.html") : Response.error())))
+    }).catch(() => caches.match(e.request, { ignoreSearch: true }).then(m => m ||
+      (e.request.mode === "navigate" ? caches.match("./index.html", { ignoreSearch: true }) : Response.error())))
   );
 });
