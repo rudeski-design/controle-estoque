@@ -1,17 +1,14 @@
 [build]
+  command = "node scripts/stamp-sw.mjs"
   publish = "."
 
+# O navegador nunca deve guardar o sw.js nem o index.html
 [[headers]]
   for = "/sw.js"
   [headers.values]
     Cache-Control = "no-cache"
 
 [[headers]]
-  for = "/config.js"
+  for = "/index.html"
   [headers.values]
     Cache-Control = "no-cache"
-
-[[headers]]
-  for = "/manifest.webmanifest"
-  [headers.values]
-    Content-Type = "application/manifest+json"
