@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
+<head><script src="https://myhub.ia.br/canvas-vendor/tailwind.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="./manifest.webmanifest?v=6">
@@ -93,6 +93,13 @@ nav button svg{width:24px;height:24px;flex:none}
 .k1,.k2,.kf{stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .k1{fill:none;stroke:var(--ic1)}.k2{fill:none;stroke:var(--ic2)}.kf{fill:var(--ic2);stroke:var(--ic1)}.kd{fill:var(--ic1)}
 .pr{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--bd)}
+/* menu suspenso de seleção */
+.cbw{position:relative}
+.cb{position:absolute;left:0;right:0;top:100%;margin-top:4px;background:var(--card);border:1px solid var(--bd);border-radius:10px;box-shadow:var(--sh);max-height:260px;overflow-y:auto;z-index:30}
+.cbi{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;background:none;border:0;border-bottom:1px solid var(--bd);padding:11px 12px;text-align:left;cursor:pointer;color:var(--tx)}
+.cbi:last-child{border-bottom:0}
+.cbi:hover,.cbi:focus-visible{background:var(--bg)}
+.cbe{padding:12px}
 @media(max-width:640px){.stats{grid-template-columns:repeat(2,1fr)}.who{width:100%}
 header{padding:calc(14px + env(safe-area-inset-top,0px)) 14px 50px}
 main{padding:0 12px 96px}
@@ -135,7 +142,7 @@ input,select,textarea{font-size:16px}
 
   <section id="mov" class="hide"><div class="card">
     <div class="seg" id="seg"><button data-k="out" class="on">− Saída</button><button data-k="in">+ Entrada</button></div>
-    <label class="l">Insumo</label><input id="mp" list="pl" placeholder="Digite para buscar…"><datalist id="pl"></datalist>
+    <div class="cbw"><input id="mp" placeholder="Escolha o insumo…" autocomplete="off"></div>
     <div class="row" style="margin-top:12px">
       <div><label class="l">Quantidade</label><input id="mq" type="number" min="1" step="1" inputmode="numeric"></div>
       <div style="flex:2"><label class="l">Observação (setor, lote…)</label><input id="mo" maxlength="120"></div>
@@ -152,7 +159,7 @@ input,select,textarea{font-size:16px}
   <section id="adm" class="hide">
     <div class="card"><b>Novo insumo</b>
       <div class="row" style="margin-top:10px">
-        <div style="flex:2"><label class="l">Nome</label><input id="an"></div>
+        <div style="flex:2" class="cbw"><input id="an" placeholder="Nome do insumo…" autocomplete="off"></div>
         <div><label class="l">Unidade</label><input id="au" placeholder="un, cx, par…"></div>
         <div><label class="l">Mínimo</label><input id="am" type="number" min="0" value="0"></div>
       </div>
@@ -180,12 +187,39 @@ function stock(){var s={};S.m.forEach(function(x){s[x.pid]=(s[x.pid]||0)+(x.type
 function nameOf(id){var p=S.p.find(function(x){return x.id===id});return p?p.name:"(removido)"}
 function who(x){return x.by||S.names[x.uid]||"—"}
 function fmt(t){var d=new Date(t);return d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}
+function activeList(){return S.p.filter(function(p){return p.active!==false}).sort(function(a,b){return a.name.localeCompare(b.name,"pt-BR")})}
 function tab(t){document.querySelectorAll("nav button").forEach(function(x){x.classList.toggle("on",x.dataset.t===t)});["est","mov","his","adm"].forEach(function(k){$("#"+k).classList.toggle("hide",k!==t)})}
 function setKind(k){kind=k;document.querySelectorAll("#seg button").forEach(function(x){x.classList.toggle("on",x.dataset.k===k)})}
 
+/* Menu suspenso: abre ao tocar/clicar no campo, filtra ao digitar */
+function combo(inp,onPick){
+  var box=document.createElement("div");box.className="cb hide";
+  inp.parentNode.appendChild(box);
+  function close(){box.classList.add("hide")}
+  function draw(){
+    var q=inp.value.trim().toLowerCase();
+    var items=activeList().filter(function(p){return !q||p.name.toLowerCase().indexOf(q)>=0});
+    box.innerHTML=items.length
+      ?items.map(function(p){return "<button type='button' class='cbi' data-id='"+esc(p.id)+"'><b>"+esc(p.name)+"</b><span class='mut'>"+esc(p.unit||"un")+"</span></button>"}).join("")
+      :"<div class='cbe mut'>Nenhum insumo encontrado.</div>";
+    box.classList.remove("hide");
+  }
+  inp.addEventListener("focus",draw);
+  inp.addEventListener("click",draw);
+  inp.addEventListener("input",draw);
+  inp.addEventListener("keydown",function(e){if(e.key==="Escape")close()});
+  box.addEventListener("click",function(e){
+    var b=e.target.closest("button[data-id]");if(!b)return;
+    var p=S.p.find(function(x){return x.id===b.dataset.id});if(!p)return;
+    inp.value=p.name;close();if(onPick)onPick(p);
+  });
+  document.addEventListener("click",function(e){if(!inp.parentNode.contains(e.target))close()});
+  inp.combo={close:close};
+}
+
 function render(){
   var s=stock(),q=$("#q").value.toLowerCase(),lo=$("#low").checked;
-  var list=S.p.filter(function(p){return p.active!==false}).sort(function(a,b){return a.name.localeCompare(b.name,"pt-BR")});
+  var list=activeList();
   var low=0,zero=0,h="";
   list.forEach(function(p){
     var qt=s[p.id]||0,mn=p.min||0,st=qt<=0?"zero":(qt<=mn?"low":"ok");
@@ -203,7 +237,6 @@ function render(){
   var d0=new Date();d0.setHours(0,0,0,0);
   $("#s1").textContent=list.length;$("#s2").textContent=low;$("#s3").textContent=zero;
   $("#s4").textContent=S.m.filter(function(x){return x.at>=d0.getTime()}).length;
-  $("#pl").innerHTML=list.map(function(p){return "<option value=\""+esc(p.name)+"\">"}).join("");
   var nm={};S.m.forEach(function(x){if(x.by)nm[x.by]=1});
   $("#nl").innerHTML=Object.keys(nm).map(function(n){return "<option value=\""+esc(n)+"\">"}).join("");
   var hs=S.m.slice().sort(function(a,b){return b.at-a.at}).slice(0,150);
@@ -216,12 +249,12 @@ $("#q").oninput=render;$("#low").onchange=render;
 $("#grid").onclick=function(e){var b=e.target.closest("button[data-a]");if(!b)return;
   var p=S.p.find(function(x){return x.id===b.dataset.id});if(!p)return;
   if(b.dataset.a==="edit"){editP(p.id);window.scrollTo(0,0);return}
-  setKind(b.dataset.a);$("#mp").value=p.name;tab("mov");$("#mq").focus();window.scrollTo(0,0)};
+  setKind(b.dataset.a);$("#mp").value=p.name;if($("#mp").combo)$("#mp").combo.close();tab("mov");window.scrollTo(0,0)};
 $("#grid").onchange=function(e){var i=e.target;if(i.classList.contains("mn")&&db){db.collection("products").doc(i.dataset.id).update({min:Math.max(0,parseInt(i.value)||0)}).catch(function(){showStatus("Não foi possível salvar o mínimo.")})}};
 
 $("#go").onclick=async function(){
   var by=$("#me").value.trim();if(kind==="in"&&!canEdit)kind="out";
-  if(!by){$("#who").classList.add("err");$("#me").focus();window.scrollTo(0,0);return msg("#mm","Informe o nome do responsável no topo da página.",false)}
+  if(!by){$("#who").classList.add("err");window.scrollTo(0,0);return msg("#mm","Informe o nome do responsável no topo da página.",false)}
   if(!db)return msg("#mm","Sem conexão com a nuvem. Tente novamente.",false);
   var nm=$("#mp").value.trim(),p=S.p.find(function(x){return x.name===nm&&x.active!==false}),q=parseInt($("#mq").value);
   if(!p)return msg("#mm","Escolha um insumo da lista.",false);
@@ -314,7 +347,10 @@ $("#out").onclick=function(e){e.preventDefault();sb.auth.signOut().then(function
 var pn="";
 function resetUI(){pn="";$("#me").value="";$("#me").readOnly=false;$("#lp").value="";$("#ln").value="";$("#mp").value="";$("#mq").value="";$("#mo").value="";$("#mm").textContent="";$("#who").classList.remove("err");showStatus("");setKind("out");tab("est");try{localStorage.removeItem("estoque-nome")}catch(e){}}
 function init(){
-  loadLocal();render();
+  loadLocal();
+  combo($("#mp"),null);
+  combo($("#an"),function(p){$("#an").value=p.name});
+  render();
   if(!sb||!CFG.url||CFG.url.indexOf("COLE")===0){$("#lg").classList.add("hide");showStatus("Preencha o arquivo config.js com a URL e a chave do Supabase.");return}
   sb.auth.onAuthStateChange(function(ev,s){
     if(s&&s.user){if(!started){started=true;setTimeout(function(){start(s.user)},0)}}
