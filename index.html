@@ -4,8 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="./manifest.webmanifest?v=6">
-<meta name="theme-color" content="#0c3b3f" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#081315" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#0c3b3f">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" type="image/png" href="./icons/icon-192.png?v=5">
 <link rel="apple-touch-icon" href="./icons/icon-192.png?v=5">
@@ -20,7 +19,7 @@
 :root{--bg:#eef3f3;--card:#fff;--tx:#14262b;--mut:#5f7479;--bd:#d6e0e1;--ac:#0a6c70;--acx:#fff;--hd:#0c3b3f;--ok:#1f8a52;--okbg:#e4f4ea;--warn:#b06a00;--warnbg:#fff1d6;--bad:#c2372b;--badbg:#fde8e5;--sh:0 1px 2px rgba(10,40,45,.06),0 4px 14px rgba(10,40,45,.05)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1a1c;--card:#142528;--tx:#e6f0f0;--mut:#8fa8ac;--bd:#254046;--ac:#46c6c9;--acx:#062224;--hd:#081315;--ok:#6fd49a;--okbg:#14301f;--warn:#ffc266;--warnbg:#3a2a10;--bad:#ff8a7a;--badbg:#3a1c19;--sh:none}}
 :root[data-theme="dark"]{--bg:#0d1a1c;--card:#142528;--tx:#e6f0f0;--mut:#8fa8ac;--bd:#254046;--ac:#46c6c9;--acx:#062224;--hd:#081315;--ok:#6fd49a;--okbg:#14301f;--warn:#ffc266;--warnbg:#3a2a10;--bad:#ff8a7a;--badbg:#3a1c19;--sh:none}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--hd)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
 button,input,select,textarea{font:inherit;color:var(--tx)}
