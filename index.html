@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="./manifest.webmanifest?v=6">
-<meta name="theme-color" content="#0c3b3f">
+<meta name="theme-color" content="#0c3b3f" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#081315" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" type="image/png" href="./icons/icon-192.png?v=5">
 <link rel="apple-touch-icon" href="./icons/icon-192.png?v=5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -159,7 +161,7 @@ input,select,textarea{font-size:16px}
   <section id="adm" class="hide">
     <div class="card"><b>Novo insumo</b>
       <div class="row" style="margin-top:10px">
-        <div style="flex:2" class="cbw"><input id="an" placeholder="Nome do insumo…" autocomplete="off"></div>
+        <div style="flex:2"><input id="an" placeholder="Nome do insumo…" autocomplete="off"></div>
         <div><label class="l">Unidade</label><input id="au" placeholder="un, cx, par…"></div>
         <div><label class="l">Mínimo</label><input id="am" type="number" min="0" value="0"></div>
       </div>
@@ -188,7 +190,17 @@ function nameOf(id){var p=S.p.find(function(x){return x.id===id});return p?p.nam
 function who(x){return x.by||S.names[x.uid]||"—"}
 function fmt(t){var d=new Date(t);return d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}
 function activeList(){return S.p.filter(function(p){return p.active!==false}).sort(function(a,b){return a.name.localeCompare(b.name,"pt-BR")})}
-function tab(t){document.querySelectorAll("nav button").forEach(function(x){x.classList.toggle("on",x.dataset.t===t)});["est","mov","his","adm"].forEach(function(k){$("#"+k).classList.toggle("hide",k!==t)})}
+function clearSec(t){
+  if(t==="est"){$("#q").value="";$("#low").checked=false;render()}
+  if(t==="mov"){$("#mp").value="";$("#mq").value="";$("#mo").value="";$("#mm").textContent=""}
+  if(t==="adm"){$("#an").value="";$("#au").value="";$("#am").value="0";$("#pq").value="";$("#bl").value="";$("#am2").textContent="";$("#em2").textContent="";closeEd();render()}
+}
+function tab(t){
+  var prev=document.querySelector("nav button.on");var mudou=!prev||prev.dataset.t!==t;
+  document.querySelectorAll("nav button").forEach(function(x){x.classList.toggle("on",x.dataset.t===t)});
+  ["est","mov","his","adm"].forEach(function(k){$("#"+k).classList.toggle("hide",k!==t)});
+  if(mudou)clearSec(t);
+}
 function setKind(k){kind=k;document.querySelectorAll("#seg button").forEach(function(x){x.classList.toggle("on",x.dataset.k===k)})}
 
 /* Menu suspenso: abre ao tocar/clicar no campo, filtra ao digitar */
@@ -249,7 +261,7 @@ $("#q").oninput=render;$("#low").onchange=render;
 $("#grid").onclick=function(e){var b=e.target.closest("button[data-a]");if(!b)return;
   var p=S.p.find(function(x){return x.id===b.dataset.id});if(!p)return;
   if(b.dataset.a==="edit"){editP(p.id);window.scrollTo(0,0);return}
-  setKind(b.dataset.a);$("#mp").value=p.name;if($("#mp").combo)$("#mp").combo.close();tab("mov");window.scrollTo(0,0)};
+  setKind(b.dataset.a);tab("mov");$("#mp").value=p.name;if($("#mp").combo)$("#mp").combo.close();window.scrollTo(0,0)};
 $("#grid").onchange=function(e){var i=e.target;if(i.classList.contains("mn")&&db){db.collection("products").doc(i.dataset.id).update({min:Math.max(0,parseInt(i.value)||0)}).catch(function(){showStatus("Não foi possível salvar o mínimo.")})}};
 
 $("#go").onclick=async function(){
@@ -286,7 +298,7 @@ $("#exE").onclick=function(){var s=stock();save("estoque.csv",[["Insumo","Quanti
 $("#exH").onclick=function(){save("historico.csv",[["Data","Insumo","Tipo","Quantidade","Responsável","Observação"]].concat(S.m.slice().sort(function(a,b){return b.at-a.at}).map(function(x){return [fmt(x.at),nameOf(x.pid),x.type==="in"?"Entrada":"Saída",x.qty,who(x),x.note||""]})))};
 
 var cur=null;
-function editP(id){var p=S.p.find(function(x){return x.id===id});if(!p)return;cur=p;tab("adm");$("#ec").classList.remove("hide");$("#en").value=p.name;$("#eu").value=p.unit||"";$("#em").value=p.min||0;$("#ed").textContent=p.active===false?"Reativar":"Desativar";msg("#em2","",true);$("#ec").scrollIntoView()}
+function editP(id){var p=S.p.find(function(x){return x.id===id});if(!p)return;tab("adm");cur=p;$("#ec").classList.remove("hide");$("#en").value=p.name;$("#eu").value=p.unit||"";$("#em").value=p.min||0;$("#ed").textContent=p.active===false?"Reativar":"Desativar";msg("#em2","",true);$("#ec").scrollIntoView()}
 function closeEd(){cur=null;$("#ec").classList.add("hide")}
 $("#ex").onclick=closeEd;
 $("#es").onclick=async function(){if(!cur||!db)return;var n=$("#en").value.trim();if(!n)return msg("#em2","Informe o nome.",false);try{await db.collection("products").doc(cur.id).update({name:n,unit:$("#eu").value.trim(),min:Math.max(0,parseInt($("#em").value)||0)});msg("#em2","Insumo atualizado.",true);setTimeout(closeEd,900)}catch(e){msg("#em2","Falha ao salvar.",false)}};
@@ -349,7 +361,6 @@ function resetUI(){pn="";$("#me").value="";$("#me").readOnly=false;$("#lp").valu
 function init(){
   loadLocal();
   combo($("#mp"),null);
-  combo($("#an"),function(p){$("#an").value=p.name});
   render();
   if(!sb||!CFG.url||CFG.url.indexOf("COLE")===0){$("#lg").classList.add("hide");showStatus("Preencha o arquivo config.js com a URL e a chave do Supabase.");return}
   sb.auth.onAuthStateChange(function(ev,s){
